@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Quiz de NIAs</title>
+<style>
+:root{--bg:#f4f1fb;--card:#fff;--tx:#1f1b2e;--mut:#6b6580;--pri:#6c3ce0;--ok:#1f9d55;--bad:#d64045;--bd:#ddd6f0;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);color-scheme:light}
+@media(prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#15121f;--card:#221d33;--tx:#f1eefb;--mut:#a79fc0;--pri:#9b7bff;--ok:#3ecf80;--bad:#ff6b70;--bd:#3a3354;color-scheme:dark}}
+*{box-sizing:inherit}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+body{margin:0;background:var(--bg);color:var(--tx);font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;min-height:100vh;display:flex;justify-content:center;padding:16px}
+main{width:100%;max-width:640px;display:flex;flex-direction:column;justify-content:center}
+.card{background:var(--card);border:1px solid var(--bd);border-radius:20px;padding:clamp(18px,4vw,32px)}
+h1{margin:0 0 6px;font-size:clamp(1.6rem,6vw,2.2rem);text-align:center}
+p.sub{margin:0 0 22px;color:var(--mut);text-align:center}
+button{font:inherit;cursor:pointer;border:2px solid var(--bd);background:var(--card);color:var(--tx);border-radius:14px;padding:16px;width:100%;text-align:left;transition:transform .1s}
+button:active{transform:scale(.98)}
+.menu button{background:var(--pri);color:#fff;border:0;text-align:center;font-size:1.1rem;font-weight:700;margin-bottom:12px}
+.menu small{display:block;font-weight:400;opacity:.85;margin-top:4px}
+.top{display:flex;justify-content:space-between;color:var(--mut);font-size:.9rem;margin-bottom:10px}
+.bar{height:8px;background:var(--bd);border-radius:8px;overflow:hidden;margin-bottom:18px}
+.bar i{display:block;height:100%;background:var(--pri);width:0;transition:width .3s}
+.q{font-size:clamp(1.05rem,3.6vw,1.35rem);font-weight:700;margin:0 0 18px;line-height:1.35}
+.opts{display:grid;gap:10px}
+@media(min-width:560px){.opts.two{grid-template-columns:1fr 1fr}}
+.opts button{font-weight:600}
+.ok{border-color:var(--ok)!important;background:color-mix(in srgb,var(--ok) 18%,var(--card))!important}
+.bad{border-color:var(--bad)!important;background:color-mix(in srgb,var(--bad) 18%,var(--card))!important}
+.nx{margin-top:16px;background:var(--pri);color:#fff;border:0;text-align:center;font-weight:700}
+.link{background:none;border:0;color:var(--mut);width:auto;padding:4px 0;font-size:.9rem}
+.fb{min-height:1.4em;margin-top:12px;font-weight:600}
+.big{font-size:3rem;text-align:center;margin:8px 0}
+.res{text-align:center}
+.hide{display:none}
+</style>
+</head>
+<body>
+<main>
+<section id="menu" class="card menu">
+<h1>Quiz de NIAs</h1>
+<p class="sub">Normas Internacionales de Auditoría · elige un juego</p>
+<button id="g1">Nombre de NIA<small>Ves el título y eliges el número de NIA</small></button>
+<button id="g2">Número de NIA<small>Ves el número y eliges el nombre de la NIA</small></button>
+</section>
+
+<section id="game" class="card hide">
+<div class="top"><button class="link" id="back">← Menú</button><span id="cnt"></span><span id="sc"></span></div>
+<div class="bar"><i id="pg"></i></div>
+<p class="q" id="q"></p>
+<div class="opts" id="opts"></div>
+<div class="fb" id="fb"></div>
+<button class="nx hide" id="nx">Siguiente</button>
+</section>
+
+<section id="end" class="card res hide">
+<div class="big" id="em"></div>
+<h1 id="fs"></h1>
+<p class="sub" id="ft"></p>
+<button class="nx" id="again">Jugar de nuevo</button>
+<button class="link" id="home" style="margin-top:10px">Volver al menú</button>
+</section>
+</main>
+<script>
+const NIAS=[
+[200,"Objetivos y principios generales que gobiernan una auditoría de estados financieros"],
+[210,"Términos de los trabajos de auditoría"],
+[220,"Control de calidad para auditorías de información financiera"],
+[230,"Documentación de auditoría"],
+[240,"Responsabilidad del auditor de considerar el fraude en una auditoría de estados financieros"],
+[250,"Consideración de leyes y reglamentos en una auditoría de estados financieros"],
+[260,"Comunicaciones de asuntos de auditoría con los encargados del gobierno corporativo"],
+[300,"Planeación de una auditoría de estados financieros"],
+[315,"Entendimiento de la entidad y su entorno y evaluación de los riesgos de representación errónea de importancia relativa"],
+[320,"Importancia relativa de la auditoría"],
+[330,"Respuestas del auditor a los riesgos evaluados"],
+[500,"Evidencia de auditoría"],
+[505,"Confirmaciones externas"],
+[520,"Procedimientos analíticos"],
+[530,"Muestreo de la auditoría y otros medios de pruebas"],
+[540,"Auditoría de estimaciones contables"],
+[550,"Partes relacionadas"],
+[560,"Hechos posteriores"],
+[570,"Negocio en marcha"],
+[580,"Representaciones de la administración"],
+[610,"Consideración del trabajo de auditoría interna"],
+[620,"Uso del trabajo de un experto"],
+[700,"Dictamen del auditor independiente sobre un juego completo de estados financieros de propósito general"],
+[701,"Modificaciones al dictamen del auditor independiente"]];
+const $=id=>document.getElementById(id);
+const shuf=a=>{a=[...a];for(let i=a.length-1;i>0;i--){const j=Math.random()*(i+1)|0;[a[i],a[j]]=[a[j],a[i]]}return a};
+const TOTAL=10;
+let mode=1,qs=[],i=0,score=0,locked=false;
+function show(id){["menu","game","end"].forEach(s=>$(s).classList.toggle("hide",s!==id))}
+function start(m){mode=m;qs=shuf(NIAS).slice(0,TOTAL);i=0;score=0;show("game");render()}
+function render(){
+ locked=false;const cur=qs[i];
+ $("cnt").textContent="Pregunta "+(i+1)+" de "+TOTAL;
+ $("sc").textContent="Puntos: "+score;
+ $("pg").style.width=(i/TOTAL*100)+"%";
+ $("fb").textContent="";$("nx").classList.add("hide");
+ const opts=shuf([cur,...shuf(NIAS.filter(n=>n!==cur)).slice(0,3)]);
+ $("q").textContent=mode===1?"¿A qué NIA corresponde: “"+cur[1]+"”?":"¿Cuál es el nombre de la NIA "+cur[0]+"?";
+ $("opts").className="opts"+(mode===1?" two":"");
+ $("opts").innerHTML="";
+ opts.forEach(o=>{
+  const b=document.createElement("button");
+  b.textContent=mode===1?"NIA "+o[0]:o[1];
+  b.onclick=()=>pick(b,o===cur,opts,cur);
+  b.dataset.id=o[0];
+  $("opts").appendChild(b);
+ });
+}
+function pick(btn,right,opts,cur){
+ if(locked)return;locked=true;
+ [...$("opts").children].forEach(b=>{if(+b.dataset.id===cur[0])b.classList.add("ok")});
+ if(right){score++;$("fb").textContent="¡Correcto! 🎉"}
+ else{btn.classList.add("bad");$("fb").textContent="Era la NIA "+cur[0]+"."}
+ $("sc").textContent="Puntos: "+score;
+ $("nx").textContent=i===TOTAL-1?"Ver resultado":"Siguiente";
+ $("nx").classList.remove("hide");
+}
+$("nx").onclick=()=>{i++;if(i>=TOTAL){finish()}else render()};
+function finish(){
+ show("end");
+ $("em").textContent=score>=9?"🏆":score>=6?"👏":"💪";
+ $("fs").textContent=score+" / "+TOTAL;
+ $("ft").textContent=score>=9?"¡Excelente dominio de las NIAs!":score>=6?"¡Muy bien, sigue practicando!":"Repasa las NIAs e inténtalo otra vez.";
+}
+$("g1").onclick=()=>start(1);
+$("g2").onclick=()=>start(2);
+$("again").onclick=()=>start(mode);
+$("home").onclick=()=>show("menu");
+$("back").onclick=()=>show("menu");
+</script>
+</body>
+</html>
